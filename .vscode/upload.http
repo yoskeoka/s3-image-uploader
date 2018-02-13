@@ -1,0 +1,35 @@
+### Hello
+
+GET https://t7c56w1aqf.execute-api.us-east-1.amazonaws.com/dev/hello
+
+
+### 画像アップロード
+
+POST https://t7c56w1aqf.execute-api.us-east-1.amazonaws.com/dev/upload HTTP/1.1
+
+< hiking.png
+
+
+### pre signed url
+POST https://t7c56w1aqf.execute-api.us-east-1.amazonaws.com/dev/presignurl HTTP/1.1
+Content-Type: text/plain
+
+{
+    "checksum": "fe6a62c4f4f1bdefe2fe200a8154b434",
+    "filename": "hiking.png"
+}
+
+### test PUT pre signed url
+PUT https://image-uploader-us-east-1-dev.s3.amazonaws.com/9de6ea27-b245-4816-a643-b555d8ad5e4d.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAI6XSHID3KHHZRONQ%2F20180213%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20180213T032403Z&X-Amz-Expires=3600&X-Amz-Security-Token=FQoDYXdzEFQaDNWPWT32iGZ5JJcUiiL2AZopqLNfum9ox%2BRAYAphS1LlexOfcBcqo9bnGaN5qlv9%2BdzgIAnoDdTXp2%2BYRI058gduVFc9KW1KoM6YMtiw9NAh0txLhCQl8oVtnaT6xz%2BRaKfAFExG%2F9D1rMSVfXSVAMddXkZHvWSaIzkhPfe7vi5tU91tm4smxn0sqxAg4slgEkTgUeiYdqhaD33GILX67xl8NnS9UXLmAdVgVVIYlKKeimwZ4PVKse5g%2F38tCVsU5exxQ6by%2FZ7Eg3BX1R4%2Bmji4CjvxOiTY4MeXYIQcgJRXAIVSQLIPriZkHIe4D5kXEsvdMq2zpXnPb5gcwAA2x6SjDmtkCCimoInUBQ%3D%3D&X-Amz-SignedHeaders=content-md5%3Bhost&X-Amz-Signature=33d5ba065c77c3b4457d0a9ac4acbc78628d5eb5233aa51c533c405af26f3fff
+Content-MD5: "fe6a62c4f4f1bdefe2fe200a8154b434"
+
+< ninja.png
+
+
+### curl post pre signed url
+
+curl -X POST -H "Content-type: application/json" -d '{"checksum":"fe6a62c4f4f1bdefe2fe200a8154b434","filename":"hiking.png"}' https://t7c56w1aqf.execute-api.us-east-1.amazonaws.com/dev/presignurl
+
+### curl PUT image
+
+curl -X PUT -H "Content-Type: image/png"
