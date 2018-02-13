@@ -16,19 +16,24 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// Response is a body of /upload response
-type Response struct {
+// ErrorResponse is a body of /upload error response
+type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-// NewResJSON create a response json
-func NewResJSON(msg string) string {
-	res := Response{msg}
-	resJSON, err := json.Marshal(&res)
+// NewErrorResJSON create a response json
+func NewErrorResJSON(msg string) string {
+	res := ErrorResponse{msg}
+	resJSON, err := json.Marshal(res)
 	if err != nil {
 		panic(err)
 	}
 	return string(resJSON)
+}
+
+// SuccessResponse is a success response
+type SuccessResponse struct {
+	URL string `json:"url"`
 }
 
 var mime = map[string]string{
@@ -59,7 +64,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
-			Body:       NewResJSON("request body mismatch"),
+			Body:       NewErrorResJSON("request body mismatch"),
 		}, nil
 	}
 
@@ -67,7 +72,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if !ok {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
-			Body:       NewResJSON(fmt.Sprintf("mime_type %v is not allowed", body.MIMEType)),
+			Body:       NewErrorResJSON(fmt.Sprintf("mime_type %v is not allowed", body.MIMEType)),
 		}, nil
 	}
 
@@ -75,7 +80,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
-			Body:       NewResJSON(fmt.Sprintf("content must be encoded base64: %v", err.Error())),
+			Body:       NewErrorResJSON(fmt.Sprintf("content must be encoded base64: %v", err.Error())),
 		}, nil
 	}
 
@@ -88,7 +93,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if len(imgBuf) > sizeLimit {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
-			Body:       NewResJSON(fmt.Sprintf("content length exceeds the limit. (%vMB)", sizeLimitMB)),
+			Body:       NewErrorResJSON(fmt.Sprintf("content length exceeds the limit. (%vMB)", sizeLimitMB)),
 		}, nil
 	}
 
@@ -113,11 +118,19 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
-			Body:       NewResJSON(err.Error()),
+			Body:       NewErrorResJSON(err.Error()),
 		}, nil
 	}
-	url := fmt.Sprintf("http://%v.s3-website-%v.amazonaws.com/%v", bucketName, region, key)
-	return events.APIGatewayProxyResponse{Body: NewResJSON(url), StatusCode: 200}, nil
+	url := fmt.Sprintf("https://%v.s3-website-%v.amazonaws.com/%v", bucketName, region, key)
+	res := SuccessResponse{url}
+	resJSON, err := json.Marshal(res)
+	if err != nil {
+		panic(err)
+	}
+	return events.APIGatewayProxyResponse{
+		StatusCode: 200,
+		Body:       string(resJSON),
+	}, nil
 }
 
 func main() {
