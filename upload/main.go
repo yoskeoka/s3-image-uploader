@@ -88,7 +88,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if len(imgBuf) > sizeLimit {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
-			Body:       NewResJSON(fmt.Sprintf("content length exceeds the limit (%v)MB", sizeLimitMB)),
+			Body:       NewResJSON(fmt.Sprintf("content length exceeds the limit. (%vMB)", sizeLimitMB)),
 		}, nil
 	}
 
