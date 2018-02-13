@@ -33,7 +33,7 @@ func NewResJSON(msg string) string {
 
 var mime = map[string]string{
 	"image/png":  ".png",
-	"image/jpeg": ".jpeg",
+	"image/jpeg": ".jpg",
 }
 
 // Request is a body of /upload request
@@ -47,10 +47,15 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	region := os.Getenv("DEPLOY_REGION")
 	bucketName := os.Getenv("BUCKET_NAME")
+	sizeLimitMBStr := os.Getenv("UPLOAD_SIZE_LIMIT_MB")
+	sizeLimitMB, err := strconv.Atoi(sizeLimitMBStr)
+	if err != nil {
+		panic(err)
+	}
 
 	var body Request
 	buf := bytes.NewBufferString(request.Body)
-	err := json.Unmarshal(buf.Bytes(), &body)
+	err = json.Unmarshal(buf.Bytes(), &body)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
@@ -78,8 +83,14 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	key := "images/" + uid.String() + ext
 	content := bytes.NewReader(imgBuf)
 
-	filelen := strconv.Itoa(content.Len())
-	fmt.Println("file length:", filelen)
+	fmt.Println("file length:", len(imgBuf))
+	sizeLimit := sizeLimitMB * (1 << (10 * 2))
+	if len(imgBuf) > sizeLimit {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 400,
+			Body:       NewResJSON(fmt.Sprintf("content length exceeds the limit (%v)MB", sizeLimitMB)),
+		}, nil
+	}
 
 	// Initialize a session in us-west-2 that the SDK will use to load
 	// credentials from the shared credentials file ~/.aws/credentials.

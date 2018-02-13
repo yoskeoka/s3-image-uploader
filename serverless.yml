@@ -55,6 +55,7 @@ provider:
   environment:
     BUCKET_NAME: "${self:custom.bucketName}"
     DEPLOY_REGION: "${self:custom.region}"
+    UPLOAD_SIZE_LIMIT_MB: 2
 
 package:
  exclude:
