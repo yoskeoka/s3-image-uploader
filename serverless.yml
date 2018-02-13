@@ -90,6 +90,8 @@ functions:
           cors: true
           headers:
             Content-Type: application/json
+          authorizer:
+            arn: arn:aws:cognito-idp:ap-northeast-1:598003641956:userpool/ap-northeast-1_B3qZK47nH
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events

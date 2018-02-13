@@ -1,0 +1,12 @@
+{
+  "name": "s3-image-uploader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/gcoka/s3-image-uploader.git",
+  "author": "gcoka <y.okamoto@gemcook.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.17.1",
+    "base64-arraybuffer": "^0.1.5"
+  }
+}
