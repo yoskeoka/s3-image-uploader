@@ -1,26 +1,17 @@
-# Welcome to Serverless!
-#
-# This file is the main config file for your service.
-# It's very minimal at this point and uses default values.
-# You can always add more config options for more control.
-# We've included some commented out config examples here.
-# Just uncomment any of them to get that config option.
-#
-# For full config options, check the docs:
-#    docs.serverless.com
-#
-# Happy Coding!
 
 service: image-uploader
 
 frameworkVersion: ">=1.26.0 <2.0.0"
 
 custom:
-  # リージョン情報を${self:custom.region}で参照できるようにする
+  # ${self:custom.xxxx}で参照できるようにする
   region: ${opt:region, self:provider.region}
-  # ステージ情報を${self:custom.stage}で参照できるようにする
   stage: ${opt:stage, self:provider.stage}
-  bucketName: ${self:service}-${self:custom.region}-${self:custom.stage}
+  bucketName: ${opt:bucket-name, '${self:service}-${self:custom.region}-${self:custom.stage}'}
+  cognitoArn: ${opt:cognito-arn}
+  bucketURL: "${opt:bucket-url, 'http://${self:custom.bucketName}.s3-website-${self:custom.region}.amazonaws.com'}"
+  uploadSizeLimit: "${opt:upload-size-limit, '2'}"
+  subDir: "${opt:sub-dir, 'upload'}"
 
 provider:
   name: aws
@@ -33,10 +24,7 @@ provider:
      Action: 
        - "s3:PutObject"
        - "s3:PutObjectAcl"
-     Resource:
-       Fn::Join:
-        - ""
-        - - "arn:aws:s3:::${self:custom.bucketName}/*"
+     Resource: "arn:aws:s3:::${self:custom.bucketName}/*"
     
    - Effect: "Allow"
      Action:
@@ -54,8 +42,9 @@ provider:
            - "/*"
   environment:
     BUCKET_NAME: "${self:custom.bucketName}"
-    DEPLOY_REGION: "${self:custom.region}"
-    UPLOAD_SIZE_LIMIT_MB: 2
+    BUCKET_URL: "${self:custom.bucketURL}"
+    UPLOAD_SIZE_LIMIT_MB: "${self:custom.uploadSizeLimit}"
+    SUB_DIR: "${self:custom.subDir}"
 
 package:
  exclude:
@@ -64,24 +53,6 @@ package:
    - ./bin/**
 
 functions:
-  hello:
-    handler: bin/hello
-    events:
-      - http:
-          path: hello
-          method: get
-          cors: true
-          headers:
-            Content-Type: application/json
-  preSignURL:
-    handler: bin/presignurl
-    events:
-      - http:
-          path: presignurl
-          method: post
-          cors: true
-          headers:
-            Content-Type: text/plain
   upload:
     handler: bin/upload
     events:
@@ -92,48 +63,23 @@ functions:
           headers:
             Content-Type: application/json
           authorizer:
-            arn: arn:aws:cognito-idp:ap-northeast-1:598003641956:userpool/ap-northeast-1_B3qZK47nH
+            arn: ${self:custom.cognitoArn}
+  # preSignURL:
+  #   handler: bin/presignurl
+  #   events:
+  #     - http:
+  #         path: presignurl
+  #         method: post
+  #         cors: true
+  #         headers:
+  #           Content-Type: text/plain
 
-#    The following are a few example events you can configure
-#    NOTE: Please make sure to change your handler code to work with those events
-#    Check the event documentation for details
-# events:
-#    events:
-#      - http:
-#          path: users/create
-#          method: get
-#      - s3: ${env:BUCKET}
-#      - schedule: rate(10 minutes)
-#      - sns: greeter-topic
-#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
-#      - alexaSkill
-#      - alexaSmartHome: amzn1.ask.skill.xx-xx-xx-xx
-#      - iot:
-#          sql: "SELECT * FROM 'some_topic'"
-#      - cloudwatchEvent:
-#          event:
-#            source:
-#              - "aws.ec2"
-#            detail-type:
-#              - "EC2 Instance State-change Notification"
-#            detail:
-#              state:
-#                - pending
-#      - cloudwatchLog: '/aws/lambda/hello'
-#      - cognitoUserPool:
-#          pool: MyUserPool
-#          trigger: PreSignUp
-
-#    Define function environment variables here
-#    environment:
-#      variable2: value2
-
-resources:
-  Resources:
-    ImageBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:custom.bucketName}
+# resources:
+#   Resources:
+#     ImageBucket:
+#       Type: AWS::S3::Bucket
+#       Properties:
+#         BucketName: ${self:custom.bucketName}
   # Outputs:
   #   NewOutput:
   #     Description: "Description for the output"

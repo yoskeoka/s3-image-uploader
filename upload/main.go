@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	jwt "github.com/dgrijalva/jwt-go"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -50,13 +51,23 @@ type Request struct {
 // Handler handles POST /upload
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	region := os.Getenv("DEPLOY_REGION")
+	region := os.Getenv("AWS_REGION")
 	bucketName := os.Getenv("BUCKET_NAME")
+	bucketURL := os.Getenv("BUCKET_URL")
+	subDir := os.Getenv("SUB_DIR")
 	sizeLimitMBStr := os.Getenv("UPLOAD_SIZE_LIMIT_MB")
 	sizeLimitMB, err := strconv.Atoi(sizeLimitMBStr)
 	if err != nil {
 		panic(err)
 	}
+
+	tokenString := request.Headers["Authorization"]
+	parser := new(jwt.Parser)
+	parser.SkipClaimsValidation = true
+	token, _ := parser.Parse(tokenString, func(tok *jwt.Token) (interface{}, error) {
+		return "", nil
+	})
+	sub := token.Claims.(jwt.MapClaims)["sub"].(string)
 
 	var body Request
 	buf := bytes.NewBufferString(request.Body)
@@ -85,7 +96,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	uid := uuid.NewV4()
-	key := "images/" + uid.String() + ext
+	key := fmt.Sprintf("%s/%s/%s%s", subDir, sub, uid.String(), ext)
 	content := bytes.NewReader(imgBuf)
 
 	fmt.Println("file length:", len(imgBuf))
@@ -97,8 +108,6 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		}, nil
 	}
 
-	// Initialize a session in us-west-2 that the SDK will use to load
-	// credentials from the shared credentials file ~/.aws/credentials.
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(region)},
 	)
@@ -121,7 +130,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 			Body:       NewErrorResJSON(err.Error()),
 		}, nil
 	}
-	url := fmt.Sprintf("https://%v.s3-website-%v.amazonaws.com/%v", bucketName, region, key)
+	url := fmt.Sprintf("%v/%v", bucketURL, key)
 	res := SuccessResponse{url}
 	resJSON, err := json.Marshal(res)
 	if err != nil {
