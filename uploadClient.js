@@ -16,7 +16,6 @@ const base64 = require("base64-arraybuffer");
 
 const buf = fs.readFileSync("ninja.png");
 const str = base64.encode(buf.buffer);
-console.log(str);
 
 axios
   .post(
