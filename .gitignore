@@ -6,7 +6,7 @@ bin
 
 # golang vendor (dependencies) directory
 vendor
-vendor.org
+vendor.orig
 
 # node modules
 /node_modules

@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	jwt "github.com/dgrijalva/jwt-go"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -61,14 +61,6 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		panic(err)
 	}
 
-	tokenString := request.Headers["Authorization"]
-	parser := new(jwt.Parser)
-	parser.SkipClaimsValidation = true
-	token, _ := parser.Parse(tokenString, func(tok *jwt.Token) (interface{}, error) {
-		return "", nil
-	})
-	sub := token.Claims.(jwt.MapClaims)["sub"].(string)
-
 	var body Request
 	buf := bytes.NewBufferString(request.Body)
 	err = json.Unmarshal(buf.Bytes(), &body)
@@ -95,8 +87,6 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		}, nil
 	}
 
-	uid := uuid.NewV4()
-	key := fmt.Sprintf("%s/%s/%s%s", subDir, sub, uid.String(), ext)
 	content := bytes.NewReader(imgBuf)
 
 	fmt.Println("file length:", len(imgBuf))
@@ -114,6 +104,12 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	// Create S3 service client
 	svc := s3.New(sess)
+
+	// build S3 ObjectKey
+	uid := uuid.NewV4()
+	// add date key for auto removable
+	date := time.Now().UTC().Format("20060102") //yyyyMMdd
+	key := fmt.Sprintf("%s/%s/%s%s", subDir, date, uid.String(), ext)
 
 	_, err = svc.PutObject(&s3.PutObjectInput{
 		Body:          content,
