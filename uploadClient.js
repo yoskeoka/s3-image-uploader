@@ -1,12 +1,13 @@
 // 呼び出し方
-// node uploadClient.js idToken
+// node uploadClient.js api-url idToken
 
 if (process.argv.length < 2) {
   console.error("IDトークンを指定して下さい");
   process.exit(1);
 }
 
-const idToken = process.argv[2];
+const apiURL = process.argv[2]
+const idToken = process.argv[3];
 const headers = { Authorization: idToken };
 
 const axios = require("axios");
@@ -19,7 +20,7 @@ console.log(str);
 
 axios
   .post(
-    "https://t7c56w1aqf.execute-api.us-east-1.amazonaws.com/dev/upload",
+    apiURL,
     {
       mime_type: "image/png",
       content: str
