@@ -12,7 +12,6 @@ custom:
   bucketURL: "${opt:bucket-url, 'http://${self:custom.bucketName}.s3-website-${self:custom.region}.amazonaws.com'}"
   uploadSizeLimit: "${opt:upload-size-limit, '2'}"
   subDir: "${opt:sub-dir, 'upload'}"
-  appendDate: "${opt:append-date, 'false'}"
 
 provider:
   name: aws
@@ -46,7 +45,6 @@ provider:
     BUCKET_URL: "${self:custom.bucketURL}"
     UPLOAD_SIZE_LIMIT_MB: "${self:custom.uploadSizeLimit}"
     SUB_DIR: "${self:custom.subDir}"
-    APPEND_DATE: "${self:custom.appendDate}"
 
 package:
  exclude:
@@ -55,8 +53,23 @@ package:
    - ./bin/**
 
 functions:
-  upload:
+  sale:
     handler: bin/upload
+    environment:
+      APPEND_DATE: 'true'
+    events:
+      - http:
+          path: upload
+          method: post
+          cors: true
+          headers:
+            Content-Type: application/json
+          authorizer:
+            arn: ${self:custom.cognitoArn}
+  avator:
+    handler: bin/upload
+    environment:
+      APPEND_DATE: 'false'
     events:
       - http:
           path: upload
