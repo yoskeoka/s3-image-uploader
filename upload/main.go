@@ -55,6 +55,12 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	bucketName := os.Getenv("BUCKET_NAME")
 	bucketURL := os.Getenv("BUCKET_URL")
 	subDir := os.Getenv("SUB_DIR")
+	appendDateStr := os.Getenv("APPEND_DATE")
+	appendDate := false
+	if appendDateStr == "true" {
+		appendDate = true
+	}
+
 	sizeLimitMBStr := os.Getenv("UPLOAD_SIZE_LIMIT_MB")
 	sizeLimitMB, err := strconv.Atoi(sizeLimitMBStr)
 	if err != nil {
@@ -107,9 +113,15 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	// build S3 ObjectKey
 	uid := uuid.NewV4()
-	// add date key for auto removable
-	date := time.Now().UTC().Format("20060102") //yyyyMMdd
-	key := fmt.Sprintf("%s/%s/%s%s", subDir, date, uid.String(), ext)
+
+	var key string
+	if appendDate {
+		// add date key for auto removable
+		date := time.Now().UTC().Format("20060102") //yyyyMMdd
+		key = fmt.Sprintf("%s/%s/%s%s", subDir, date, uid.String(), ext)
+	} else {
+		key = fmt.Sprintf("%s/%s%s", subDir, uid.String(), ext)
+	}
 
 	_, err = svc.PutObject(&s3.PutObjectInput{
 		Body:          content,
