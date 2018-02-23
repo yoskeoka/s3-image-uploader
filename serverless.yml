@@ -59,7 +59,7 @@ functions:
       APPEND_DATE: 'true'
     events:
       - http:
-          path: upload
+          path: sale
           method: post
           cors: true
           headers:
@@ -72,7 +72,7 @@ functions:
       APPEND_DATE: 'false'
     events:
       - http:
-          path: upload
+          path: avator
           method: post
           cors: true
           headers:
