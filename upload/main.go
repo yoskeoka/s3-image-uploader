@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -155,11 +156,47 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		panic(err)
 	}
 
+	// resize
+	risizeDomain := os.Getenv("RISIZE_DOMAIN")
+	if risizeDomain != "" {
+		if err := resize(bucketName, key); err != nil {
+			panic(err)
+		}
+	}
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Headers:    headers,
 		Body:       string(resJSON),
 	}, nil
+}
+
+// resize
+func resize(bucketName string, key string) error {
+
+	risizeURL := os.Getenv("RISIZE_URL")
+	jsonStr := fmt.Sprintf(`{"branch_name":"%s", "image_file_path": "%s", "size": {"width": 387, "height": 387}, "quality": 80}`, bucketName, key)
+
+	req, err := http.NewRequest(
+		"POST",
+		risizeURL,
+		bytes.NewBuffer([]byte(jsonStr)),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Content-Type 設定
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return err
 }
 
 func main() {
