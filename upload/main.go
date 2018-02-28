@@ -43,6 +43,11 @@ var mime = map[string]string{
 	"image/jpeg": ".jpg",
 }
 
+var headers = map[string]string{
+	"Content-Type":                "application/json",
+	"Access-Control-Allow-Origin": "*",
+}
+
 // Request is a body of /upload request
 type Request struct {
 	MIMEType string `json:"mime_type"`
@@ -74,6 +79,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
+			Headers:    headers,
 			Body:       NewErrorResJSON("request body mismatch"),
 		}, nil
 	}
@@ -82,6 +88,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if !ok {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
+			Headers:    headers,
 			Body:       NewErrorResJSON(fmt.Sprintf("mime_type %v is not allowed", body.MIMEType)),
 		}, nil
 	}
@@ -90,6 +97,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
+			Headers:    headers,
 			Body:       NewErrorResJSON(fmt.Sprintf("content must be encoded base64: %v", err.Error())),
 		}, nil
 	}
@@ -101,6 +109,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if len(imgBuf) > sizeLimit {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
+			Headers:    headers,
 			Body:       NewErrorResJSON(fmt.Sprintf("content length exceeds the limit. (%vMB)", sizeLimitMB)),
 		}, nil
 	}
@@ -136,6 +145,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
+			Headers:    headers,
 			Body:       NewErrorResJSON(err.Error()),
 		}, nil
 	}
@@ -146,24 +156,27 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		panic(err)
 	}
 
-	jsonStr := fmt.Sprintf(`{"branch_name":"%s", "image_file_path": "%s", "size": {"width": 387, "height": 387}, "quality": 80}`, bucketName, key)
-	apiurl := "https://api.gemcook/images/resize"
-	if err := HTTPPost(apiurl, jsonStr); err != nil {
+	// resize
+	if err := resize(bucketName, key); err != nil {
 		panic(err)
 	}
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
+		Headers:    headers,
 		Body:       string(resJSON),
 	}, nil
 }
 
-// HTTPPost は POST リクエストを送る
-func HTTPPost(url string, jsonStr string) error {
+// resize
+func resize(bucketName string, key string) error {
+
+	apiurl := "https://api.gemcook/images/resize"
+	jsonStr := fmt.Sprintf(`{"branch_name":"%s", "image_file_path": "%s", "size": {"width": 387, "height": 387}, "quality": 80}`, bucketName, key)
 
 	req, err := http.NewRequest(
 		"POST",
-		url,
+		apiurl,
 		bytes.NewBuffer([]byte(jsonStr)),
 	)
 	if err != nil {
