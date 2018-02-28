@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -144,10 +145,42 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		panic(err)
 	}
+
+	jsonStr := fmt.Sprintf(`{"branch_name":"%s", "image_file_path": "%s", "size": {"width": 387, "height": 387}, "quality": 80}`, bucketName, key)
+	apiurl := "https://api.gemcook/images/resize"
+	if err := HTTPPost(apiurl, jsonStr); err != nil {
+		panic(err)
+	}
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Body:       string(resJSON),
 	}, nil
+}
+
+// HTTPPost は POST リクエストを送る
+func HTTPPost(url string, jsonStr string) error {
+
+	req, err := http.NewRequest(
+		"POST",
+		url,
+		bytes.NewBuffer([]byte(jsonStr)),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Content-Type 設定
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return err
 }
 
 func main() {
