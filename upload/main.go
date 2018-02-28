@@ -157,8 +157,11 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	// resize
-	if err := resize(bucketName, key); err != nil {
-		panic(err)
+	risizeDomain := os.Getenv("RISIZE_DOMAIN")
+	if risizeDomain != "" {
+		if err := resize(bucketName, key); err != nil {
+			panic(err)
+		}
 	}
 
 	return events.APIGatewayProxyResponse{
@@ -171,12 +174,12 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 // resize
 func resize(bucketName string, key string) error {
 
-	apiurl := "https://api.gemcook/images/resize"
+	risizeURL := os.Getenv("RISIZE_URL")
 	jsonStr := fmt.Sprintf(`{"branch_name":"%s", "image_file_path": "%s", "size": {"width": 387, "height": 387}, "quality": 80}`, bucketName, key)
 
 	req, err := http.NewRequest(
 		"POST",
-		apiurl,
+		risizeURL,
 		bytes.NewBuffer([]byte(jsonStr)),
 	)
 	if err != nil {

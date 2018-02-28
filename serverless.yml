@@ -12,6 +12,8 @@ custom:
   bucketURL: "${opt:bucket-url, 'http://${self:custom.bucketName}.s3-website-${self:custom.region}.amazonaws.com'}"
   uploadSizeLimit: "${opt:upload-size-limit, '2'}"
   subDir: "${opt:sub-dir, 'upload'}"
+  risizeDomain: "${opt:risize-domain, ''}"
+  risizeUrl: "${'https://${self:custom.risizeDomain}/images/resize'}"
 
 provider:
   name: aws
@@ -45,6 +47,8 @@ provider:
     BUCKET_URL: "${self:custom.bucketURL}"
     UPLOAD_SIZE_LIMIT_MB: "${self:custom.uploadSizeLimit}"
     SUB_DIR: "${self:custom.subDir}"
+    RISIZE_DOMAIN: "${self:custom.risizeDomain}"
+    RISIZE_URL: "${self:custom.risizeUrl}"
 
 package:
  exclude:
