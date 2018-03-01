@@ -59,6 +59,7 @@ package:
 functions:
   sale:
     handler: bin/upload
+    timeout: 30
     environment:
       APPEND_DATE: 'true'
     events:
@@ -72,6 +73,7 @@ functions:
             arn: ${self:custom.cognitoArn}
   avator:
     handler: bin/upload
+    timeout: 30
     environment:
       APPEND_DATE: 'false'
     events:
