@@ -163,6 +163,8 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		if err := resize(bucketName, key); err != nil {
 			panic(err)
 		}
+	} else {
+		fmt.Println("RESIZE_DOMAIN is not set")
 	}
 
 	return events.APIGatewayProxyResponse{
@@ -196,13 +198,13 @@ func resize(bucketName string, key string) error {
 		return err
 	}
 	defer resp.Body.Close()
-	fmt.Printf("resize/image status code: %v", resp.StatusCode)
+	fmt.Printf("resize/image status code: %v\n", resp.StatusCode)
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("resize/image response: %v", string(b))
+	fmt.Printf("resize/image response: %v\n", string(b))
 	return err
 }
 
