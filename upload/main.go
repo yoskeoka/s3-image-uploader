@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -157,8 +158,8 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	// resize
-	risizeDomain := os.Getenv("RISIZE_DOMAIN")
-	if risizeDomain != "" {
+	resizeDomain := os.Getenv("RESIZE_DOMAIN")
+	if resizeDomain != "" {
 		if err := resize(bucketName, key); err != nil {
 			panic(err)
 		}
@@ -174,12 +175,12 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 // resize
 func resize(bucketName string, key string) error {
 
-	risizeURL := os.Getenv("RISIZE_URL")
+	resizeURL := os.Getenv("RESIZE_URL")
 	jsonStr := fmt.Sprintf(`{"branch_name":"%s", "image_file_path": "%s", "size": {"width": 387, "height": 387}, "quality": 80}`, bucketName, key)
 
 	req, err := http.NewRequest(
 		"POST",
-		risizeURL,
+		resizeURL,
 		bytes.NewBuffer([]byte(jsonStr)),
 	)
 	if err != nil {
@@ -195,7 +196,13 @@ func resize(bucketName string, key string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	fmt.Printf("resize/image status code: %v", resp.StatusCode)
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
 
+	fmt.Printf("resize/image response: %v", string(b))
 	return err
 }
 
