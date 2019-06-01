@@ -6,7 +6,7 @@
   "author": "gcoka <y.okamoto@gemcook.com>",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.17.1",
+    "axios": "^0.19.0",
     "base64-arraybuffer": "^0.1.5"
   }
 }
